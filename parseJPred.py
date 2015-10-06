@@ -13,7 +13,7 @@
 import sys
 from collections import OrderedDict
 
-# Read input file
+# Read input files
 try:
   infasta = open(sys.argv[1])
   injnet = open(sys.argv[2])
@@ -42,6 +42,8 @@ def readFasta(infasta):
       else :  # sequence, not header, possibly multi-line
         seqs[name] = seqs[name] + line
   seqs[name] = list(seqs[name])
+  seqs['position'] = range(1,len(seqs[name])+1)
+  seqs['name'] = [name] * len(seqs[name])
   return seqs
 
 def readJPred(injnet):
@@ -56,31 +58,25 @@ def readJPred(injnet):
       entries[program] = ''
       values = words[1].split(',')  # predictions are values
       entries[program] = values[0:-1]
-#  entries['JNETJURY'] = [ '-' for value in entries['JNETJURY'] if value != '*' ]
   tempValue = []
-  for value in entries['JNETJURY']:
+  for value in entries['JNETJURY']:  # replace empty values with dashes
     if value == '*':
       tempValue.append('*')
     else:
       tempValue.append('-')
   entries['JNETJURY'] = tempValue
-#  print tempValue,'\n',entries['JNETJURY']
-#  print entries
   return entries
 
+# Make dict of input files
 seq = readFasta(infasta)
 infasta.close()
-
 predictions = readJPred(injnet)
 injnet.close()
-
 results = seq.copy()
 results.update(predictions)
 
+# Print table with results
 for row in zip(*([key] + value for key, value in results.items())):
-#for row in zip(*([key] + value for key, value in sorted(results.items(),reverse=True))):
-#for row in zip([key] + value for key, value in sorted(results.items())):
-#  print str(row)
   print '\t'.join(map(str, row))
 
 
@@ -92,9 +88,6 @@ for name in seq:
 for program in entries:
   print program,len(entries[program]),entries[program]
 '''
-#entries.update(seq)
-
-#print entries
 
 '''
 jnetpred
