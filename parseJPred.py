@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-  Parse JPred output
+  Parse *.jnet files from JPred output
   File name: parseJPred.py
   Author: Nicolas Palopoli
   Date created: 2015/10/05
@@ -11,21 +11,44 @@
 '''
 
 import sys
+from collections import OrderedDict
 
 # Read input file
 try:
-  infile = open(sys.argv[1])
+  infasta = open(sys.argv[1])
+  injnet = open(sys.argv[2])
 except IndexError:
-  print("Input file name not specified. Exit.")
+  print("Input file(s) not specified. Format: ./parseJPred.py <in.fasta> <in.jnet>")
   exit()
 except IOError:
-  print("Input file {} does not exist. Exit.".format(sys.argv[1]))
+  print("Input file(s) not found. Format: ./parseJPred.py <in.fasta> <in.jnet>")
   exit()
 
-def readJPred(infile):
+def readFasta(infasta):
+  '''Store fasta sequences from file.'''
+  seqs = OrderedDict()
+#  seqs={}  # dict for raw seqs
+  readFirstSeq = False
+  for line in infasta:
+    if line.strip() or line not in ['\n', '\r\n']:  # avoid empty or only whitespace lines
+      line=line.rstrip()  # discard newline at the end (if any)
+      if line[0]=='>':  # or line.startswith('>'); distinguish header
+        if readFirstSeq:  # exit if more than 2 sequences
+          break
+        readFirstSeq = True
+        words=line.split()
+        name=words[0][1:]
+        seqs[name]=''
+      else :  # sequence, not header, possibly multi-line
+        seqs[name] = seqs[name] + line
+  seqs[name] = list(seqs[name])
+  return seqs
+
+def readJPred(injnet):
   '''Store JPred predictions by program from file.'''
   entries={}  # dict for raw entries
-  for line in infile:
+  entries = OrderedDict()
+  for line in injnet:
     if line.strip() or line not in ['\n', '\r\n']:  # avoid empty or only whitespace lines
       line = line.rstrip()  # discard newline at the end (if any)
       words = line.split(':')
@@ -33,14 +56,45 @@ def readJPred(infile):
       entries[program] = ''
       values = words[1].split(',')  # predictions are values
       entries[program] = values[0:-1]
+#  entries['JNETJURY'] = [ '-' for value in entries['JNETJURY'] if value != '*' ]
+  tempValue = []
+  for value in entries['JNETJURY']:
+    if value == '*':
+      tempValue.append('*')
+    else:
+      tempValue.append('-')
+  entries['JNETJURY'] = tempValue
+#  print tempValue,'\n',entries['JNETJURY']
+#  print entries
   return entries
 
-entries = readJPred(infile)
+seq = readFasta(infasta)
+infasta.close()
 
-infile.close()
+predictions = readJPred(injnet)
+injnet.close()
+
+results = seq.copy()
+results.update(predictions)
+
+for row in zip(*([key] + value for key, value in results.items())):
+#for row in zip(*([key] + value for key, value in sorted(results.items(),reverse=True))):
+#for row in zip([key] + value for key, value in sorted(results.items())):
+#  print str(row)
+  print '\t'.join(map(str, row))
+
+
+'''
+print seq
+for name in seq:
+  print name,len(seq[name]),list(seq[name])
 
 for program in entries:
   print program,len(entries[program]),entries[program]
+'''
+#entries.update(seq)
+
+#print entries
 
 '''
 jnetpred
