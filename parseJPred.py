@@ -38,12 +38,12 @@ def readFasta(infasta):
         readFirstSeq = True
         words=line.split()
         name=words[0][1:]
-        seqs[name]=''
+        seqs['res']=''
       else :  # sequence, not header, possibly multi-line
-        seqs[name] = seqs[name] + line
-  seqs[name] = list(seqs[name])
-  seqs['position'] = range(1,len(seqs[name])+1)
-  seqs['name'] = [name] * len(seqs[name])
+        seqs['res'] = seqs['res'] + line
+  seqs['res'] = list(seqs['res'])
+  seqs['position'] = range(1,len(seqs['res'])+1)
+  seqs['name'] = [name] * len(seqs['res'])
   return seqs
 
 def readJPred(injnet):
