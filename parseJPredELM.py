@@ -81,17 +81,21 @@ def mapELMpositions(parsedELM,primaryAcc):
   ELMpos = {}
   for row in parsedELM:
     if primaryAcc == row['Primary_Acc']:
-      ELMpos[row['Accession']] = (row['Start'],row['End'])
+      ELMpos[row['Accession']] = [row['Start'],row['End']]
+#      ELMpos[row['Accession']] = (row['Start'],row['End'])
   return ELMpos
 
 def placeELM(seq,ELMpos):
   '''Map ELM to fasta sequence'''
-  seq['ELMpos'] = '-' * len(seq['res'])
-  seq['ELMacc'] = '-' * len(seq['res'])
+  seq['ELMpos'] = list('-' * len(seq['res']))
+  seq['ELMacc'] = list('-' * len(seq['res']))
   for accession, limits in ELMpos.iteritems():
-    for pos in range(int(limits[0]),int(limits[1])+1):
+    for pos in range(int(limits[0])-1,int(limits[1])):
       seq['ELMpos'][pos] = seq['res'][pos]
-      seq['ELMacc'] = accession
+      if '-' in seq['ELMacc'][pos]: 
+        seq['ELMacc'][pos] = accession
+      else:
+        seq['ELMacc'][pos] = seq['ELMacc'][pos] + accession
   return seq
 
 def printTable(results):
@@ -107,10 +111,8 @@ infasta.close()
 parsedELM = readELMinstances(inELMinstances)
 inELMinstances.close()
 ELMpos = mapELMpositions(parsedELM,primaryAcc)
-#print ELMpos
 seq = placeELM(seq,ELMpos)
-print seq
-'''
+
 predictions = readJPred(injnet)
 injnet.close()
 
@@ -118,6 +120,4 @@ results = seq.copy()  # merge tables
 results.update(predictions)
 
 printTable(results)
-
-'''
 
