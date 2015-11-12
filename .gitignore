@@ -17,14 +17,19 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# Archivos temporales de Vim
+# Temporary Vim files
 *~
 
-# Fasta para pruebas
+# Old files
+OLD/
+
+# Test files
 test*
 
-# Input files para runs
+# Input files for runs
 *.tsv
+
+!parseJPredELM_output/
 
 # =========================
 # Operating System Files
