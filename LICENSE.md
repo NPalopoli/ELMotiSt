@@ -1,4 +1,4 @@
-The JPredParse package is licensed under the GPLv3 License:
+The ELMotiSt package is licensed under the GPLv3 License:
 
 > Copyright (C) 2015  Nicolas Palopoli
 > This program is free software: you can redistribute it and/or modify

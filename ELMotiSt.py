@@ -3,7 +3,7 @@
 
 '''
   Parse *.jnet files from JPred output
-  File name: parseJPred.py
+  File name: ELMotiSt.py
   Author: Nicolas Palopoli
   Date created: 2015/10/05
   Date last modified: 2015/11/03
@@ -16,7 +16,6 @@ import csv
 from Bio import SeqIO
 
 # Read input files
-# TO-DO: replace argument parsing with argparse
 try:
   infasta = open(sys.argv[1])
   injnet = open(sys.argv[2])
@@ -24,10 +23,10 @@ try:
   inSIFTSparse = sys.argv[4]
   primaryAcc = sys.argv[5]
 except IndexError:
-  print("Input file(s) not specified. Format: ./parseJPred.py <in.fasta> <in.jnet> <elm_instances[.date].tsv> <parseSIFTS.out> <primaryAcc>")
+  print("Input file(s) not specified. Format: ./ELMotiSt.py <in.fasta> <in.jnet> <elm_instances[.date].tsv> <parseSIFTS.out> <primaryAcc>")
   exit()
 except IOError:
-  print("Input file(s) not found. Format: ./parseJPred.py <in.fasta> <in.jnet> <elm_instances[.date].tsv> <parseSIFTS.out> <primaryAcc>")
+  print("Input file(s) not found. Format: ./ELMotiSt.py <in.fasta> <in.jnet> <elm_instances[.date].tsv> <parseSIFTS.out> <primaryAcc>")
   exit()
 
 def readFasta(infasta):

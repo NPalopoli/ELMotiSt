@@ -3,10 +3,10 @@
 ###############################################################################
 #
 # Generate parsed table of ELM structural information
-# File name: parseJPred.sh
+# File name: ELMotiSt.sh
 # Author: Nicolas Palopoli
 # Date created: 2015/10/05
-# Date last modified: 2015/11/12
+# Date last modified: 2015/11/13
 # Bash version: 4.3.11(1)-release 
 #
 ###############################################################################
@@ -82,7 +82,7 @@ do
 done
 
 # Check required files
-testexist parseJPredELM.py
+testexist ELMotiSt.py
 
 # Write list of files to process
 if [ ! -f ./files.lst ]
@@ -94,9 +94,9 @@ then
 fi
 
 # Check/create output directory
-if [ ! -d ./parseJPredELM_output ]
+if [ ! -d ./ELMotiStELM_output ]
 then
-  mkdir ./parseJPredELM_output 
+  mkdir ./ELMotiStELM_output 
 fi
 
 ### START ###
@@ -104,20 +104,20 @@ fi
 # Remove list of result files if existing
 testrm files_tsv.lst
 
-# Run parseJPredELM.py for each in files.lst
+# Run ELMotiSt.py for each in files.lst
 while read line
 do
   accession=`head -1 "$dirjpred"/"$line".fasta | cut -d'|' -f 2`
-  ./parseJPredELM.py "$dirjpred"/"$line".fasta "$dirjpred"/"$line".jnet "$inelm" "$insifts" "$accession" >parseJPredELM_output/"$line".tsv
+  ./ELMotiSt.py "$dirjpred"/"$line".fasta "$dirjpred"/"$line".jnet "$inelm" "$insifts" "$accession" >ELMotiStELM_output/"$line".tsv
   echo "$line".tsv >>files_tsv.lst
 done <files.lst
 
 # Collect results in single output
 sample=`head -1 files.lst`
-head -1 parseJPredELM_output/"$sample".tsv>JPredParse_all.tsv
+head -1 ELMotiStELM_output/"$sample".tsv>ELMotiSt_all.tsv
 while read line
 do
-  tail -n +2 parseJPredELM_output/"$line" >>JPredParse_all.tsv
+  tail -n +2 ELMotiStELM_output/"$line" >>ELMotiSt_all.tsv
 done<files_tsv.lst
 
 # Cleanup
