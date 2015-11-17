@@ -29,7 +29,8 @@ test*
 # Input files for runs
 *.tsv
 
-!parseJPredELM_output/
+# Output directory
+ELMotiStELM_output/
 
 # =========================
 # Operating System Files
