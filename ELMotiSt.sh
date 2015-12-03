@@ -114,10 +114,10 @@ done <files.lst
 
 # Collect results in single output
 sample=`head -1 files.lst`
-head -1 ELMotiStELM_output/"$sample".tsv>ELMotiSt_all.tsv
+head -1 ELMotiStELM_output/"$sample".tsv>ELMotiStELM_all.tsv
 while read line
 do
-  tail -n +2 ELMotiStELM_output/"$line" >>ELMotiSt_all.tsv
+  tail -n +2 ELMotiStELM_output/"$line" >>ELMotiStELM_all.tsv
 done<files_tsv.lst
 
 # Cleanup
