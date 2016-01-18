@@ -46,7 +46,7 @@ function usage {
 ### SETUP ###
 
 # Set default paths
-dirjpred='/home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output'
+dirjpred='/home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_ALL'
 inelm='/home/npalopoli/SLiMBench/ELMmap/elm_instances.2015-08-27.tsv'
 insifts='/home/npalopoli/SIFTSParse/parseSIFTS_withELMID.out'
 
