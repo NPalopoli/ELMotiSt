@@ -99,10 +99,10 @@ then
   mkdir ./ELMotiStELM_output 
 fi
 
-### START ###
-
 # Remove list of result files if existing
 testrm files_tsv.lst
+
+### START ###
 
 # Run ELMotiSt.py for each in files.lst
 while read line
