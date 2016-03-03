@@ -32,8 +32,11 @@ test*
 # Output directory
 ELMotiStELM_output/
 
-# history
+# History
 history.txt
+
+# Backups
+*.tar.gz
 
 # =========================
 # Operating System Files
