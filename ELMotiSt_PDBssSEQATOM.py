@@ -78,10 +78,10 @@ def readELMinstances(infile):
   return elm
 
 def mapELMpositions(parsedELM,primaryAcc):
-  '''Make dict with [ELMAccession:[Start,End]]'''
+  '''Make dict with [ELMAccession:[Start,End,ELMType,ELMIdentifier]]'''
   ELMpos = {}
   for row in parsedELM:
-    if primaryAcc == row['Primary_Acc']:
+    if primaryAcc == row['Primary_Acc']:  # Uniprot accession match
 #      ELMpos[row['Accession']] = [row['Start'],row['End']]
       ELMpos[row['Accession']] = [row['Start'],row['End'],row['ELMType'],row['ELMIdentifier']]
 #      ELMpos[row['Accession']] = (row['Start'],row['End'])
@@ -93,35 +93,62 @@ def placeELM(seq,ELMpos):
   seq['ELMacc'] = list('-' * len(seq['res']))
   seq['ELMType'] = list('-' * len(seq['res']))
   seq['ELMIdentifier'] = list('-' * len(seq['res']))
-#  for accession, limits in ELMpos.iteritems():
-#    for pos in range(int(limits[0])-1,int(limits[1])):
   for accession, vals in ELMpos.iteritems():
-    for pos in range(int(vals[0])-1,int(vals[1])):
-      seq['ELMpos'][pos] = seq['res'][pos]
-      if '-' in seq['ELMacc'][pos]: 
+    for pos in range(int(vals[0])-1,int(vals[1])):  # iterate over Primary_Acc sequence from 'Start' to 'End' positions of ELM
+      seq['ELMpos'][pos] = seq['res'][pos]  # if aa at position matches:
+      if '-' in seq['ELMacc'][pos]:  # create list of ELMs at position
         seq['ELMacc'][pos] = accession
         seq['ELMType'][pos] = vals[2]
         seq['ELMIdentifier'][pos] = vals[3]
-      else:
-        seq['ELMacc'][pos] = seq['ELMacc'][pos] + accession
-        seq['ELMType'][pos] = seq['ELMType'][pos] + vals[2]
-        seq['ELMIdentifier'][pos] = seq['ELMIdentifier'][pos] + vals[3]
+      else:  # append to list of ELMs at position if already exists
+        seq['ELMacc'][pos] = seq['ELMacc'][pos] + ',' + accession
+        seq['ELMType'][pos] = seq['ELMType'][pos] + ',' + vals[2]
+        seq['ELMIdentifier'][pos] = seq['ELMIdentifier'][pos] + ',' + vals[3]
   return seq
+
+'''
+inSIFTSparse
+
+>ELMI000068:P38936:4RJF:F:sequence
+------------------------------------------------------------------------------------------------------------------------------------------GRKRRQTSMTDFFHSKRRLIFS
+>ELMI000068:P38936:4RJF:F:secstr
+-----------------------------------------------------------------------------------------------------------------------------------------------B--GGGTS-EEEEE---
+>ELMI000068:P38936:4RJF:F:disorder
+------------------------------------------------------------------------------------------------------------------------------------------XXXX------------------
+>ELMI000068:P38936:4RJF:F:SEQRES
+------------------------------------------------------------------------------------------------------------------------------------------GRKRRQTSMTDFFHSKRRLIFS
+>ELMI000068:P38936:4RJF:F:SEQATOM
+----------------------------------------------------------------------------------------------------------------------------------------------RQTSMTDFFHSKRRLIFS
+
+>ELMI000068:P38936:1AXC:F:sequence
+------------------------------------------------------------------------------------------------------------------------------------------GRKRRQTSMTDFYHSKRRLIFS
+>ELMI000068:P38936:1AXC:F:secstr
+-----------------------------------------------------------------------------------------------------------------------------------------------B--GGGTSEEEEEEE--
+>ELMI000068:P38936:1AXC:F:disorder
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+>ELMI000068:P38936:1AXC:F:SEQRES
+------------------------------------------------------------------------------------------------------------------------------------------GRKRRQTSMTDFYHSKRRLIFS
+>ELMI000068:P38936:1AXC:F:SEQATOM
+----------------------------------------------------------------------------------------------------------------------------------------------RQTSMTDFYHSKRRLIFS
+'''
 
 def readSIFTSparse(inSIFTSparse,ELMpos,seq):
   '''Read 2nd struct from PDB following SIFTS parsing'''
 #  PDBss = OrderedDict()
   PDBss = {}
-  PDBss['PDBid'] = list('-' * len(seq['res']))
-  PDBss['PDBchain'] = list('-' * len(seq['res']))
-  PDBss['PDBseq'] = list('-' * len(seq['res']))
-  PDBss['PDBss'] = list('-' * len(seq['res']))
-  PDBss['PDBseqres'] = list('-' * len(seq['res']))
-  PDBss['PDBseqatom'] = list('-' * len(seq['res']))
-  PDBss['PDBdis'] = list('-' * len(seq['res']))
+  PDBss['PDBid'] = list('.' * len(seq['res']))
+  PDBss['PDBchain'] = list('.' * len(seq['res']))
+  PDBss['PDBseq'] = list('.' * len(seq['res']))
+  PDBss['PDBss'] = list('.' * len(seq['res']))
+  PDBss['PDBseqres'] = list('.' * len(seq['res']))
+  PDBss['PDBseqatom'] = list('.' * len(seq['res']))
+  PDBss['PDBdis'] = list('.' * len(seq['res']))
   fastaseqs = SeqIO.parse(open(inSIFTSparse),'fasta')
   for fasta in fastaseqs:
-    if fasta.id[0:10] == ELMpos.keys()[0]:
+#chk    if fasta.id[0:10] == ELMpos.keys()[0]:
+    for keys in ELMpos:
+      if fasta.id[0:10] != keys:
+        continue
 #      if 'sequence' in fasta.id:
 #        for pos in range(0,len(seq['res'])):
 #          if seq['ELMacc'][pos] == '-':
@@ -136,45 +163,62 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
 #        PDBss['PDBchain'][pos] = fasta.id[23]
       if 'sequence' in fasta.id:
         for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBseq'][pos] != '-':
+          if PDBss['PDBseq'][pos] != '.':
             PDBss['PDBseq'][pos] = '%s,%s' % (PDBss['PDBseq'][pos],fasta.seq[pos])
-          else:
+          elif fasta.seq[pos] != '-':
             PDBss['PDBseq'][pos] = fasta.seq[pos]
-#          PDBss['PDBseq'][pos] = fasta.seq[pos]
-          if PDBss['PDBseq'][pos] != '-':
-            if PDBss['PDBid'][pos] != '-':
+#chk      if PDBss['PDBseq'][pos] != '.':
+          if fasta.seq[pos] != '-':
+            if PDBss['PDBid'][pos] != '.':  # and fasta.id[18:22] not in PDBss['PDBid'][pos]:
               PDBss['PDBid'][pos] = '%s,%s' % (PDBss['PDBid'][pos],fasta.id[18:22])
               PDBss['PDBchain'][pos] = '%s,%s' % (PDBss['PDBchain'][pos],fasta.id[23])
+#            elif fasta.seq[pos] != '-':
             else:
               PDBss['PDBid'][pos] = fasta.id[18:22]
-              PDBss['PDBchain'][pos] = fasta.id[23] 
-      elif 'secstr' in fasta.id:
-        for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBss'][pos] != '-':
-            PDBss['PDBss'][pos] = '%s,%s' % (PDBss['PDBss'][pos],fasta.seq[pos])
-          else:
-            PDBss['PDBss'][pos] = fasta.seq[pos]
-#          PDBss['PDBss'][pos] = fasta.seq[pos]
-      elif 'disorder' in fasta.id:
-        for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBdis'][pos] != '-':
-            PDBss['PDBdis'][pos] = '%s,%s' % (PDBss['PDBdis'][pos],fasta.seq[pos])
-          else:
-            PDBss['PDBdis'][pos] = fasta.seq[pos]
-#          PDBss['PDBdis'][pos] = fasta.seq[pos]
-#        break  # activate to read only first PDB for each ELMid
+              PDBss['PDBchain'][pos] = fasta.id[23]
       elif 'SEQRES' in fasta.id:
         for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBseqres'][pos] != '-':
+          if PDBss['PDBseqres'][pos] != '.':
             PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fasta.seq[pos])
-          else:
+          elif PDBss['PDBseq'][pos] != '.':
+#chk          elif fasta.seq[pos] != '-':
             PDBss['PDBseqres'][pos] = fasta.seq[pos]
       elif 'SEQATOM' in fasta.id:
         for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBseqatom'][pos] != '-':
+          if PDBss['PDBseqatom'][pos] != '.':
             PDBss['PDBseqatom'][pos] = '%s,%s' % (PDBss['PDBseqatom'][pos],fasta.seq[pos])
-          else:
+          elif PDBss['PDBseq'][pos] != '.':
+#chk          elif fasta.seq[pos] != '-':
             PDBss['PDBseqatom'][pos] = fasta.seq[pos]
+      elif 'secstr' in fasta.id:
+        for pos in range(0,len(fasta.seq)):
+          if PDBss['PDBss'][pos] != '.':
+            PDBss['PDBss'][pos] = '%s,%s' % (PDBss['PDBss'][pos],fasta.seq[pos])
+          elif PDBss['PDBseq'][pos] != '.':
+            PDBss['PDBss'][pos] = fasta.seq[pos]
+      elif 'disorder' in fasta.id:
+        for pos in range(0,len(fasta.seq)):
+          if PDBss['PDBdis'][pos] != '.':
+            PDBss['PDBdis'][pos] = '%s,%s' % (PDBss['PDBdis'][pos],fasta.seq[pos])
+          elif PDBss['PDBseq'][pos] != '.':
+            PDBss['PDBdis'][pos] = fasta.seq[pos]
+      
+#  return PDBss
+  for pos in range(0,len(seq['res'])):  # restore temporary initial '.' as '-'
+    if PDBss['PDBid'][pos] == '.':
+      PDBss['PDBid'][pos] = '-'
+    if PDBss['PDBchain'][pos] == '.':
+      PDBss['PDBchain'][pos] = '-'
+    if PDBss['PDBseq'][pos] == '.':
+      PDBss['PDBseq'][pos] = '-'
+    if PDBss['PDBss'][pos] == '.':
+      PDBss['PDBss'][pos] = '-'
+    if PDBss['PDBseqres'][pos] == '.':
+      PDBss['PDBseqres'][pos] = '-'
+    if PDBss['PDBseqatom'][pos] == '.':
+      PDBss['PDBseqatom'][pos] = '-'
+    if PDBss['PDBdis'][pos] == '.':
+      PDBss['PDBdis'][pos] = '-'
   return PDBss
 
 def printTable(results):
