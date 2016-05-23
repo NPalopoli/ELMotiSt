@@ -143,6 +143,12 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
   PDBss['PDBseqres'] = list('.' * len(seq['res']))
   PDBss['PDBseqatom'] = list('.' * len(seq['res']))
   PDBss['PDBdis'] = list('.' * len(seq['res']))
+#  PDBss['PDBidchain'] = list('-')
+# pdbidchain = list('-') * len(seq['res'])
+  readflag = 0
+  pdbseq = [[] for _ in seq['res']]
+  pdbidchain = [[] for _ in seq['res']]
+  pdbseqres = [[] for _ in seq['res']]
   fastaseqs = SeqIO.parse(open(inSIFTSparse),'fasta')
   for fasta in fastaseqs:
 #chk    if fasta.id[0:10] == ELMpos.keys()[0]:
@@ -163,45 +169,65 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
 #        PDBss['PDBchain'][pos] = fasta.id[23]
       if 'sequence' in fasta.id:
         for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBseq'][pos] != '.':
-            PDBss['PDBseq'][pos] = '%s,%s' % (PDBss['PDBseq'][pos],fasta.seq[pos])
-          elif fasta.seq[pos] != '-':
-            PDBss['PDBseq'][pos] = fasta.seq[pos]
-#chk      if PDBss['PDBseq'][pos] != '.':
-          if fasta.seq[pos] != '-':
-            if PDBss['PDBid'][pos] != '.':  # and fasta.id[18:22] not in PDBss['PDBid'][pos]:
+          if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseq[pos]):
+            pdbseq[pos].append((fasta.id[18:22],fasta.id[23]))
+#            readflag = 1
+#          if readflag == 1:
+            if PDBss['PDBseq'][pos] != '.':
+              PDBss['PDBseq'][pos] = '%s,%s' % (PDBss['PDBseq'][pos],fasta.seq[pos])
+            elif fasta.seq[pos] != '-':
+              PDBss['PDBseq'][pos] = fasta.seq[pos]
+#      if PDBss['PDBseq'][pos] != '.':
+#          if fasta.seq[pos] != '-':
+          if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
+            pdbidchain[pos].append((fasta.id[18:22],fasta.id[23]))
+            readflag = 1
+            if PDBss['PDBid'][pos] != '.':
               PDBss['PDBid'][pos] = '%s,%s' % (PDBss['PDBid'][pos],fasta.id[18:22])
               PDBss['PDBchain'][pos] = '%s,%s' % (PDBss['PDBchain'][pos],fasta.id[23])
 #            elif fasta.seq[pos] != '-':
             else:
               PDBss['PDBid'][pos] = fasta.id[18:22]
               PDBss['PDBchain'][pos] = fasta.id[23]
+          else:
+            readflag = 0
       elif 'SEQRES' in fasta.id:
         for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBseqres'][pos] != '.':
-            PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fasta.seq[pos])
-          elif PDBss['PDBseq'][pos] != '.':
-#chk          elif fasta.seq[pos] != '-':
-            PDBss['PDBseqres'][pos] = fasta.seq[pos]
+#chk          if PDBss['PDBseqres'][pos] != '.':
+          if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
+            pdbseqres[pos].append((fasta.id[18:22],fasta.id[23]))
+            if PDBss['PDBseqres'][pos] != '.':
+              PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fasta.seq[pos])
+            elif PDBss['PDBseq'][pos] != '.':
+  #          elif fasta.seq[pos] != '-':
+              PDBss['PDBseqres'][pos] = fasta.seq[pos]
+#          if PDBss['PDBseqres'][pos] != '.' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
+#            PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fasta.seq[pos])
+#          elif PDBss['PDBseq'][pos] != '.':
+##          elif fasta.seq[pos] != '-':
+#            PDBss['PDBseqres'][pos] = fasta.seq[pos]
       elif 'SEQATOM' in fasta.id:
         for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBseqatom'][pos] != '.':
-            PDBss['PDBseqatom'][pos] = '%s,%s' % (PDBss['PDBseqatom'][pos],fasta.seq[pos])
-          elif PDBss['PDBseq'][pos] != '.':
-#chk          elif fasta.seq[pos] != '-':
-            PDBss['PDBseqatom'][pos] = fasta.seq[pos]
+          if readflag == 1:
+            if PDBss['PDBseqatom'][pos] != '.':
+              PDBss['PDBseqatom'][pos] = '%s,%s' % (PDBss['PDBseqatom'][pos],fasta.seq[pos])
+            elif PDBss['PDBseq'][pos] != '.':
+#            elif fasta.seq[pos] != '-':
+              PDBss['PDBseqatom'][pos] = fasta.seq[pos]
       elif 'secstr' in fasta.id:
         for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBss'][pos] != '.':
-            PDBss['PDBss'][pos] = '%s,%s' % (PDBss['PDBss'][pos],fasta.seq[pos])
-          elif PDBss['PDBseq'][pos] != '.':
-            PDBss['PDBss'][pos] = fasta.seq[pos]
+          if readflag == 1:
+            if PDBss['PDBss'][pos] != '.':
+              PDBss['PDBss'][pos] = '%s,%s' % (PDBss['PDBss'][pos],fasta.seq[pos])
+            elif PDBss['PDBseq'][pos] != '.':
+             PDBss['PDBss'][pos] = fasta.seq[pos]
       elif 'disorder' in fasta.id:
         for pos in range(0,len(fasta.seq)):
-          if PDBss['PDBdis'][pos] != '.':
-            PDBss['PDBdis'][pos] = '%s,%s' % (PDBss['PDBdis'][pos],fasta.seq[pos])
-          elif PDBss['PDBseq'][pos] != '.':
-            PDBss['PDBdis'][pos] = fasta.seq[pos]
+          if readflag == 1:
+            if PDBss['PDBdis'][pos] != '.':
+              PDBss['PDBdis'][pos] = '%s,%s' % (PDBss['PDBdis'][pos],fasta.seq[pos])
+            elif PDBss['PDBseq'][pos] != '.':
+              PDBss['PDBdis'][pos] = fasta.seq[pos]
       
 #  return PDBss
   for pos in range(0,len(seq['res'])):  # restore temporary initial '.' as '-'
