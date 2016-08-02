@@ -11,7 +11,7 @@
 #
 ###############################################################################
 #
-# RUN: ./ELMotiSt_PDBssSEQATOM.sh >ELMotiSt_PDBssSEQATOM.out 2>&1 &
+# RUN: ./ELMotiSt_PDBssSEQATOM.sh 1>ELMotiSt_PDBssSEQATOM.out 2>ELMotiSt_PDBssSEQATOM.err &
 #
 ###############################################################################
 
@@ -95,14 +95,16 @@ testexist ELMotiSt_PDBssSEQATOM.py
 # Write list of files to process
 if [ ! -f ./files.lst ]
 then
-#  ls "$dirjpred"/*.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
+  ls "$dirjpred"/*.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
 # Sample subsets for testing
 # ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output/sp-P43489-TNR4_HUMAN.jnet | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
 # ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output/sp-P03070-LT_SV40.jnet | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
 # ls $dir/*DROME.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
 # ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output/sp-P53141-MLC1_YEAST.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
-#  ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output/sp-P39748-FEN1_HUMAN.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
-  ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output/sp-P38936-CDN1A_HUMAN.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
+# ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output/sp-P39748-FEN1_HUMAN.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
+# ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output/sp-P38936-CDN1A_HUMAN.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
+# ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_dir_output/sp-O75884-RBBP9_HUMAN.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
+# ls /home/npalopoli/20150924_ELM-Struct/JPred/elm_instances.fasta_ALL/sp-A4V2Z1-A4V2Z1_DROME.fasta | xargs -n 1 basename | cut -d'.' -f 1 >files.lst
 fi
 
 # Check/create output directory
@@ -120,8 +122,15 @@ testrm files_tsv.lst
 while read line
 do
   accession=`head -1 "$dirjpred"/"$line".fasta | cut -d'|' -f 2`
-  echo -e "RUN\t$line\t$accession"
+#  echo -en "RUN\t$line\t$accession"
+  echo -en "RUN\t$line"
   ./ELMotiSt_PDBssSEQATOM.py "$dirjpred"/"$line".fasta "$dirjpred"/"$line".jnet "$inelm" "$insifts" "$accession" >ELMotiStELM_PDBssSEQATOM_output/"$line".tsv
+  if [ $? == 0 ]
+  then
+    echo -e "\tOK"
+  else
+    echo -e "\tERR"
+  fi
   echo "$line".tsv >>files_tsv.lst
 done <files.lst
 
