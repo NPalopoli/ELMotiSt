@@ -535,7 +535,7 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
             else:
               readflag = 0  # '-' in position or PDBID:CHAIN already read
       elif 'SEQRES' in fasta.id:
-        continue
+#        continue
 #chk        for pos in range(0,len(fasta.seq)):
         for pos in range(int(minindex),int(maxindex)):
 #          if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
@@ -558,7 +558,7 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
 ##          elif fasta.seq[pos] != '-':
 #            PDBss['PDBseqres'][pos] = fasta.seq[pos]
       elif 'SEQATOM' in fasta.id:
-        continue
+#        continue
 #chk        for pos in range(0,len(fasta.seq)):
         for pos in range(minindex,maxindex):
           if readflag == 1:  # testing readflag, compared with no readflag in SEQRES; if not working, move all below one indentation left
