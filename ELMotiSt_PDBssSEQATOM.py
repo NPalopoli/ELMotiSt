@@ -366,7 +366,6 @@ def getaliindex(fastaseq,fastaid,seqres):
     matrix = matlist.ident  # use identity matrix: http://biopython.org/DIST/docs/api/Bio.SubsMat.MatrixInfo-module.html#ident
     matrix.update(((a,'X'),6) for (a,b) in matrix.keys() if (a,'X') not in matrix)  # add tuples with 'X' in matrix
     matrix.update(((b,a),val) for (a,b),val in matrix.items())  # make matrix squared
-#    alignments = pairwise2.align.globalms(fastaseq2,seqres2,10,0,-10,-1, one_alignment_only=1)
     alignments = pairwise2.align.globalds(fastaseq2,seqres2,matrix,-10,-1, one_alignment_only=1)
 #    print 'ALIGNED'
 #    print fastaid
@@ -404,18 +403,18 @@ def getaliindex(fastaseq,fastaid,seqres):
 #    listfastaseq, listseqres, score, begin, end = topaln
 #    listfastaseq = list(listfastaseq)
 #    listseqres = list(listseqres)
-    align1, align2, score, begin, end = alignments[0]
-    listfastaseq = list(align1)
-    listseqres = list(align2)
+    alifastaseq, aliseqres, score, begin, end = alignments[0]
+    listalifastaseq = list(alifastaseq)
+    listaliseqres = list(aliseqres)
     listindex = []
-    for index,pos in enumerate(listfastaseq):  # o es listseqres?
-      if listseqres[index] != '-':
+    for index,pos in enumerate(listalifastaseq):  # o es listseqres?
+      if listaliseqres[index] != '-':
         listindex.append(index)
 #    minindex = min(listindex)
 #    maxindex = max(listindex)
     minindex = min(listindex) + seqresindex
     maxindex = max(listindex) + seqresindex
-    return (minindex, maxindex+1, fastaseq, seqres, align1, align2)  # maxindex+1 deberia ser correcto en todos los casos
+    return (minindex, maxindex+1, fastaseq, seqres, alifastaseq, aliseqres)  # maxindex+1 deberia ser correcto en todos los casos
 #  except:
 #    print 'ERROR'
 #    return ('0', '1', str(fastaseq), ''.join(seqres), str(fastaseq), ''.join(seqres))
@@ -492,37 +491,18 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
         if fastaseqtmp == seqrestmp:  # case: XXXX | XXXX
           minindex = 0
           maxindex = len(seq['res']) - 1
+          alifastaseq = str(fasta.seq)
+          aliseqres = ''.join(seq['res'])
         else:  # cases: sequences difer in length or aa sequence
-          minindex, maxindex, fastaseq, seqres, ali1, ali2  = getaliindex(fasta.seq,fasta.id,seq['res'])
+          minindex, maxindex, fastaseq, seqres, alifastaseq, aliseqres = getaliindex(fasta.seq,fasta.id,seq['res'])
 #chk        for pos in range(0,len(fasta.seq)):
         minindex = int(minindex)
         maxindex = int(maxindex)
         for pos in range(minindex,maxindex):
-          try:
-#chk            if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseq[pos]):
-            if seq['res'][pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseq[pos]):  # 
-              pdbseq[pos].append((fasta.id[18:22],fasta.id[23]))  # 18-22:PDBID; 23:PDBCHAIN 
-          except IndexError:
-            print 'INDEX_ERROR:', fasta.id, '\n', fasta.seq, '\n', ''.join(seq['res']), '\n', minindex, '\n', maxindex, '\n'
-#            print fasta.seq, '\n', seq['res'], '\n', ''.join(seq['res']).strip("-"), '\n', minindex, '\n', maxindex, '\n', fastaseq, '\n', seqres, '\n', ali1, '\n', ali2
-            break
-          else:
-#            readflag = 1
-#          if readflag == 1:
-            if pos >= len(fasta.seq):
-              if PDBss['PDBseq'][pos] != '.':
-                PDBss['PDBseq'][pos] = '%s,%s' % (PDBss['PDBseq'][pos],'-')
-              else:
-                PDBss['PDBseq'][pos] = '-'
-            else:
-              if PDBss['PDBseq'][pos] != '.':
-                PDBss['PDBseq'][pos] = '%s,%s' % (PDBss['PDBseq'][pos],fasta.seq[pos])
-              elif fasta.seq[pos] != '-':
-                PDBss['PDBseq'][pos] = fasta.seq[pos]
-#      if PDBss['PDBseq'][pos] != '.':
-#          if fasta.seq[pos] != '-':
-          if pos < len(fasta.seq):
-            if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
+#X STARTEST
+          if pos < len(alifastaseq):
+#X            if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
+            if alifastaseq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
               pdbidchain[pos].append((fasta.id[18:22],fasta.id[23]))
               readflag = 1
               if PDBss['PDBid'][pos] != '.':
@@ -534,24 +514,86 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
                 PDBss['PDBchain'][pos] = fasta.id[23]
             else:
               readflag = 0  # '-' in position or PDBID:CHAIN already read
+#X ENDTEST
+          try:
+#chk            if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseq[pos]):
+#X            if seq['res'][pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseq[pos]):  # 
+            if aliseqres[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseq[pos]):  # 
+              pdbseq[pos].append((fasta.id[18:22],fasta.id[23]))  # 18-22:PDBID; 23:PDBCHAIN 
+          except IndexError:
+            print 'INDEX_ERROR:', fasta.id, '\n', fasta.seq, '\n', ''.join(seq['res']), '\n', minindex, '\n', maxindex, '\n'
+#            print fasta.seq, '\n', seq['res'], '\n', ''.join(seq['res']).strip("-"), '\n', minindex, '\n', maxindex, '\n', fastaseq, '\n', seqres, '\n', ali1, '\n', ali2
+            break
+          else:
+#            readflag = 1
+#          if readflag == 1:
+#X            if pos >= len(fasta.seq):
+            if pos >= len(alifastaseq):
+              if PDBss['PDBseq'][pos] != '.':
+                PDBss['PDBseq'][pos] = '%s,%s' % (PDBss['PDBseq'][pos],'-')
+              else:
+                PDBss['PDBseq'][pos] = '-'
+##X            else:
+            elif readflag == 1:
+              if PDBss['PDBseq'][pos] != '.':
+#X                PDBss['PDBseq'][pos] = '%s,%s' % (PDBss['PDBseq'][pos],fasta.seq[pos])
+#X              elif fasta.seq[pos] != '-':
+#X                PDBss['PDBseq'][pos] = fasta.seq[pos]
+                PDBss['PDBseq'][pos] = '%s,%s' % (PDBss['PDBseq'][pos],alifastaseq[pos])
+              elif alifastaseq[pos] != '-':
+                PDBss['PDBseq'][pos] = alifastaseq[pos]
+#      if PDBss['PDBseq'][pos] != '.':
+#          if fasta.seq[pos] != '-':
+#X          if pos < len(fasta.seq):
+##X          if pos < len(alifastaseq):
+#X            if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
+##X            if alifastaseq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
+##X              pdbidchain[pos].append((fasta.id[18:22],fasta.id[23]))
+##X              readflag = 1
+##X              if PDBss['PDBid'][pos] != '.':
+##X                PDBss['PDBid'][pos] = '%s,%s' % (PDBss['PDBid'][pos],fasta.id[18:22])
+##X                PDBss['PDBchain'][pos] = '%s,%s' % (PDBss['PDBchain'][pos],fasta.id[23])
+#              elif fasta.seq[pos] != '-':
+##X              else:
+##X                PDBss['PDBid'][pos] = fasta.id[18:22]
+##X                PDBss['PDBchain'][pos] = fasta.id[23]
+##X            else:
+##X              readflag = 0  # '-' in position or PDBID:CHAIN already read
       elif 'SEQRES' in fasta.id:
 #        continue
 #chk        for pos in range(0,len(fasta.seq)):
         for pos in range(int(minindex),int(maxindex)):
+##X          if readflag == 1:  # testing readflag, now also in SEQRES; if not working, move all below one indentation left
 #          if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
-          if seq['res'][pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
-            pdbseqres[pos].append((fasta.id[18:22],fasta.id[23]))
-            if pos >= len(fasta.seq):
-              if PDBss['PDBseqres'][pos] != '.':
-                PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],'-')
-              elif PDBss['PDBseq'][pos] != '.':
-                PDBss['PDBseqres'][pos] = '-'
-            else:
-              if PDBss['PDBseqres'][pos] != '.':
-                PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fasta.seq[pos])
-              elif PDBss['PDBseq'][pos] != '.':
+#X         if seq['res'][pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
+          try:
+##X            if aliseqres[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
+            if alifastaseq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
+              pdbseqres[pos].append((fasta.id[18:22],fasta.id[23]))
+              readflag = 1  ##X
+            else:  ##X
+              readflag = 0  # '-' in position or PDBID:CHAIN already read  ##X
+          except IndexError:
+            print 'INDEX_ERROR:', fasta.id, '\n', fasta.seq, '\n', ''.join(seq['res']), '\n', minindex, '\n', maxindex, '\n'
+            break
+          else:
+#X            if pos >= len(fasta.seq):
+              if pos >= len(alifastaseq):
+                if PDBss['PDBseqres'][pos] != '.':
+                  PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],'-')
+                elif PDBss['PDBseq'][pos] != '.':
+                  PDBss['PDBseqres'][pos] = '-'
+##X              else:
+              elif readflag == 1:
+                if PDBss['PDBseqres'][pos] != '.':
+#X                PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fasta.seq[pos])
+                  PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],alifastaseq[pos])
+                elif PDBss['PDBseq'][pos] != '.':
   #          elif fasta.seq[pos] != '-':
-                PDBss['PDBseqres'][pos] = fasta.seq[pos]
+#X                PDBss['PDBseqres'][pos] = fasta.seq[pos]
+                  PDBss['PDBseqres'][pos] = alifastaseq[pos]
+##X            else:  ##X
+##X              readflag = 0  # '-' in position or PDBID:CHAIN already read  ##X
 #          if PDBss['PDBseqres'][pos] != '.' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
 #            PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fasta.seq[pos])
 #          elif PDBss['PDBseq'][pos] != '.':
@@ -561,25 +603,37 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
 #        continue
 #chk        for pos in range(0,len(fasta.seq)):
         for pos in range(minindex,maxindex):
-          if readflag == 1:  # testing readflag, compared with no readflag in SEQRES; if not working, move all below one indentation left
+##X          if readflag == 1:  # testing readflag, compared with no readflag in SEQRES; if not working, move all below one indentation left
 #            if seq['res'][pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
             try:
-              if seq['res'][pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqatom[pos]):
+##X              if seq['res'][pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqatom[pos]):
+              if alifastaseq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqatom[pos]):  ##X
                 pdbseqatom[pos].append((fasta.id[18:22],fasta.id[23]))
-                if pos  >= len(fasta.seq):
+                readflag = 1  ##X
+              else:  ##X
+                readflag = 0  ##X
+            except IndexError:  ##X
+              print 'INDEX_ERROR', '\n', fasta.seq, '\n', ''.join(seq['res']).strip("-"), '\n', fastaseq, '\n', seqres, '\n', alifastaseq, '\n', aliseqres, '\n', minindex, '\n', maxindex, '\n', pos  ##X
+              break  ##X
+            else:  ##X
+##X                if pos  >= len(fasta.seq):
+                if pos >= len(alifastaseq): ##X
                   if PDBss['PDBseqatom'][pos] != '.':
                     PDBss['PDBseqatom'][pos] = '%s,%s' % (PDBss['PDBseqatom'][pos],'-')
                   elif PDBss['PDBseq'][pos] != '.':
                     PDBss['PDBseqatom'][pos] = '-'
-                else:
+##X                else:
+                elif readflag == 1:  ##X
                   if PDBss['PDBseqatom'][pos] != '.':
-                    PDBss['PDBseqatom'][pos] = '%s,%s' % (PDBss['PDBseqatom'][pos],fasta.seq[pos])
+##X                    PDBss['PDBseqatom'][pos] = '%s,%s' % (PDBss['PDBseqatom'][pos],fasta.seq[pos])
+                    PDBss['PDBseqatom'][pos] = '%s,%s' % (PDBss['PDBseqatom'][pos],alifastaseq[pos])  ##X
                   elif PDBss['PDBseq'][pos] != '.':
 #              elif fasta.seq[pos] != '-':
-                    PDBss['PDBseqatom'][pos] = fasta.seq[pos]
-            except IndexError:
-              print 'INDEX_ERROR', '\n', fasta.seq, '\n', ''.join(seq['res']).strip("-"), '\n', fastaseq, '\n', seqres, '\n', ali0, '\n', ali1, '\n', minindex, '\n', maxindex, '\n', pos
-              break
+##X                    PDBss['PDBseqatom'][pos] = fasta.seq[pos]
+                    PDBss['PDBseqatom'][pos] = alifastaseq[pos]  ##X
+##X            except IndexError:
+##X              print 'INDEX_ERROR', '\n', fasta.seq, '\n', ''.join(seq['res']).strip("-"), '\n', fastaseq, '\n', seqres, '\n', alifastaseq, '\n', aliseqres, '\n', minindex, '\n', maxindex, '\n', pos
+##X              break
       elif 'secstr' in fasta.id:
         continue
 #chk        for pos in range(0,len(fasta.seq)):
