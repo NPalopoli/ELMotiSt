@@ -342,23 +342,36 @@ def getaliindex(fastaseq,fastaid,seqres):
   '''Align Uniprot sequence to SIFTS parsed sequence'''
   minindex = 0
   maxindex = 0
+  rlimit = 0  ##A
+  llimit = len(seqres) - 1  ##A
 #  if len(fastaseq) == len(seqres):
 #    
 #  fastaseq = fastaseq.ungap('-')  # SIFTS sequence  # gap strip no esta funcionando
-  fastaseq2 = str(fastaseq).strip('-')
-  seqres2 = ''.join(seqres).strip('-')  # Uniprot sequence
+  fastaseq2 = str(fastaseq).strip('-')  # SIFTS sequence (ungapped)
+  seqres2 = ''.join(seqres).strip('-')  # Uniprot sequence (ungapped) - not needed really since these never have gaps, so seqres == seqres2
   if len(fastaseq) == 0 or len(fastaseq2) == 0:  # cases when no SIFTS sequence: XXXX | ____ ; XXXX | ---- 
 #    return (0, len(seqres), str(fastaseq), ''.join(seqres), str(fastaseq2), ''.join(seqres2))  # minindex, maxindex, fastaseq, seqres, ali1, ali2
-    return (0, len(seqres) - 1, str(fastaseq), ''.join(seqres), '-' * len(seqres), ''.join(seqres))  # minindex, maxindex, fastaseq, seqres, string of '-', seqres
+##A    return (0, len(seqres) - 1, str(fastaseq), ''.join(seqres), '-' * len(seqres), ''.join(seqres))  # minindex, maxindex, fastaseq, seqres, string of '-', seqres
+    rlimit = 0
+    llimit = len(seqres) - 1
+    return (0, len(seqres) - 1, rlimit, llimit, str(fastaseq), ''.join(seqres), '-' * len(seqres), ''.join(seqres))  # minindex, maxindex, rlimit, llimit, fastaseq, seqres, string of '-', seqres  ##A
   elif seqres2 in fastaseq2:  # case: SIFTS includes Uniprot plus other residues
     fastaseqindex = str(fastaseq).index(fastaseq2)  # index of first position not gap in fastaseq
     fastaseq2index = fastaseq2.index(seqres2)  # index of first position of seqres2 (ungapped seqres) in fastaseq2 (ungapped fastaseq)
+    rlimit = fastaseqindex + fastaseq2index
+    llimit = fastaseqindex + fastaseq2index + len(seqres)
 #    minindex = fastaseqindex + fastaseq2index  # minindex starts at position of fastaseq (gapped) where match with seqres (ungapped)
-    return (0, len(seqres) - 1, str(fastaseq), ''.join(seqres), fastaseq[(fastaseqindex + fastaseq2index):(fastaseqindex + fastaseq2index + len(seqres))], ''.join(seqres))  # minindex, maxindex, fastaseq, seqres, sequence of fastaseq matching seqres2 (ungapped seqres), seqres
+##A    return (0, len(seqres) - 1, str(fastaseq), ''.join(seqres), fastaseq[(fastaseqindex + fastaseq2index):(fastaseqindex + fastaseq2index + len(seqres))], ''.join(seqres))  # minindex, maxindex, fastaseq, seqres, sequence of fastaseq matching seqres2 (ungapped seqres), seqres
+    return (0, len(seqres) - 1, rlimit, llimit, 0, str(fastaseq), ''.join(seqres), fastaseq[(fastaseqindex + fastaseq2index):(fastaseqindex + fastaseq2index + len(seqres))], ''.join(seqres))  # minindex, maxindex, rlimit, llimit, fastaseq, seqres, sequence of fastaseq matching seqres2 (ungapped seqres), seqres  ##A
   elif fastaseq2 in seqres:  # case: Uniprot includes SIFTS plus other residues
     fastaseqindex = str(fastaseq).index(fastaseq2)  # index of first position not gap in fastaseq
-    seqres2index = seqres2.index(fastaseq2)  # index of first position of fastaseq2 (ungapped fastaseq) in seqres2 (ungapped seqres)
-    return (0, len(seqres) - 1, str(fastaseq), ''.join(seqres), ''.join('-' * seqres2index, str(fastaseq), '-' * (len(seqres2) - seqres2index - len(fastaseq))), ''.join(seqres))  # minindex, maxindex, fastaseq, seqres, sequence of fastaseq matching seqres2 completed with gaps, seqres
+    seqresindex = seqres.index(fastaseq2)  # index of first position of fastaseq2 (ungapped fastaseq) in seqres (gapped seqres)
+    seqres2index = seqres2.index(fastaseq2)  # index of first position of fastaseq2 (ungapped fastaseq) in seqres2 (ungapped seqres) - not needed as seqres == seqres2
+##chequear desde aca
+    rlimit = -(seqresindex)
+    llimit = len(seqres) - seqresindex - len(fastaseq2)
+##A    return (0, len(seqres) - 1, str(fastaseq), ''.join(seqres), ''.join('-' * seqres2index, str(fastaseq), '-' * (len(seqres2) - seqres2index - len(fastaseq))), ''.join(seqres))  # minindex, maxindex, fastaseq, seqres, sequence of fastaseq matching seqres2 completed with gaps, seqres
+    return (0, len(seqres) - 1, rlimit, llimit, str(fastaseq), ''.join(seqres), ''.join(('-' * seqres2index, str(fastaseq2), '-' * (len(seqres2) - seqres2index - len(fastaseq2)))), ''.join(seqres))  # minindex, maxindex, rlimit, llimit, fastaseq, seqres, sequence of fastaseq matching seqres2 completed with gaps, seqres  ##A - seqresindex instead of seqres2index?
   else:  # cases: sequences difer in length or aa sequence and none is empty
     fastaseqindex = str(fastaseq).index(fastaseq2)  # index of first position not gap in fastaseq
     seqresindex = ''.join(seqres).index(seqres2)  # index of first position not gap in seqres
@@ -414,7 +427,8 @@ def getaliindex(fastaseq,fastaid,seqres):
 #    maxindex = max(listindex)
     minindex = min(listindex) + seqresindex
     maxindex = max(listindex) + seqresindex
-    return (minindex, maxindex+1, fastaseq, seqres, alifastaseq, aliseqres)  # maxindex+1 deberia ser correcto en todos los casos
+##A    return (minindex, maxindex+1, fastaseq, seqres, alifastaseq, aliseqres)  # maxindex+1 deberia ser correcto en todos los casos
+    return (minindex, maxindex+1, rlimit, llimit, fastaseq, seqres, alifastaseq, aliseqres)  # maxindex+1 deberia ser correcto en todos los casos  ##A
 #  except:
 #    print 'ERROR'
 #    return ('0', '1', str(fastaseq), ''.join(seqres), str(fastaseq), ''.join(seqres))
@@ -491,10 +505,12 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
         if fastaseqtmp == seqrestmp:  # case: XXXX | XXXX
           minindex = 0
           maxindex = len(seq['res']) - 1
+          rlimit = 0
+          llimit = len(seq['res']) - 1
           alifastaseq = str(fasta.seq)
           aliseqres = ''.join(seq['res'])
         else:  # cases: sequences difer in length or aa sequence
-          minindex, maxindex, fastaseq, seqres, alifastaseq, aliseqres = getaliindex(fasta.seq,fasta.id,seq['res'])
+          minindex, maxindex, rlimit, llimit, fastaseq, seqres, alifastaseq, aliseqres = getaliindex(fasta.seq,fasta.id,seq['res'])  ##A
 #chk        for pos in range(0,len(fasta.seq)):
         minindex = int(minindex)
         maxindex = int(maxindex)
@@ -562,13 +578,18 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
       elif 'SEQRES' in fasta.id:
 #        continue
 #chk        for pos in range(0,len(fasta.seq)):
+        if rlimit > 0:
+          fastaseq = fasta.seq[rlimit:llimit]
+        else:
+          fastaseq = ''.join(('-' * rlimit, str(fasta.seq), '-' * llimit))
         for pos in range(int(minindex),int(maxindex)):
 ##X          if readflag == 1:  # testing readflag, now also in SEQRES; if not working, move all below one indentation left
 #          if fasta.seq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
 #X         if seq['res'][pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
           try:
 ##X            if aliseqres[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
-            if alifastaseq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
+##A            if alifastaseq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):
+            if fastaseq[pos] != '-' and ((fasta.id[18:22],fasta.id[23]) not in pdbseqres[pos]):  ##A
               pdbseqres[pos].append((fasta.id[18:22],fasta.id[23]))
               readflag = 1  ##X
             else:  ##X
@@ -578,7 +599,8 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
             break
           else:
 #X            if pos >= len(fasta.seq):
-              if pos >= len(alifastaseq):
+##A              if pos >= len(alifastaseq):
+              if pos >= len(fastaseq):  ##A
                 if PDBss['PDBseqres'][pos] != '.':
                   PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],'-')
                 elif PDBss['PDBseq'][pos] != '.':
@@ -587,11 +609,13 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
               elif readflag == 1:
                 if PDBss['PDBseqres'][pos] != '.':
 #X                PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fasta.seq[pos])
-                  PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],alifastaseq[pos])
+##A                  PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],alifastaseq[pos])
+                  PDBss['PDBseqres'][pos] = '%s,%s' % (PDBss['PDBseqres'][pos],fastaseq[pos]) ##A
                 elif PDBss['PDBseq'][pos] != '.':
   #          elif fasta.seq[pos] != '-':
 #X                PDBss['PDBseqres'][pos] = fasta.seq[pos]
-                  PDBss['PDBseqres'][pos] = alifastaseq[pos]
+##A                  PDBss['PDBseqres'][pos] = alifastaseq[pos]
+                  PDBss['PDBseqres'][pos] = fastaseq[pos]  ##A
 ##X            else:  ##X
 ##X              readflag = 0  # '-' in position or PDBID:CHAIN already read  ##X
 #          if PDBss['PDBseqres'][pos] != '.' and ((fasta.id[18:22],fasta.id[23]) not in pdbidchain[pos]):
