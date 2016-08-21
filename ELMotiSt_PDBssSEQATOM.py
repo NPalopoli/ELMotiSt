@@ -13,6 +13,7 @@
 import sys
 from collections import OrderedDict
 import csv
+import re
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio import pairwise2
@@ -379,7 +380,7 @@ def getaliindex(fastaseq,fastaid,seqres):
     matrix = matlist.ident  # use identity matrix: http://biopython.org/DIST/docs/api/Bio.SubsMat.MatrixInfo-module.html#ident
     matrix.update(((a,'X'),6) for (a,b) in matrix.keys() if (a,'X') not in matrix)  # add tuples with 'X' in matrix
     matrix.update(((b,a),val) for (a,b),val in matrix.items())  # make matrix squared
-    alignments = pairwise2.align.globalds(fastaseq2,seqres2,matrix,-10,-1, one_alignment_only=1)
+    alignments = pairwise2.align.globalds(fastaseq2,seqres2,matrix,-10,-2, one_alignment_only=1)
 #    print 'ALIGNED'
 #    print fastaid
 #    print 'FASTASEQ2:\n' + fastaseq2
@@ -417,12 +418,43 @@ def getaliindex(fastaseq,fastaid,seqres):
 #    listfastaseq = list(listfastaseq)
 #    listseqres = list(listseqres)
     alifastaseq, aliseqres, score, begin, end = alignments[0]
+#    alifastaseq = re.sub(r'^(-A-Z)*(-)*(-A-Z)*$', '\1\3\2', alifastaseq)  ##A
     listalifastaseq = list(alifastaseq)
     listaliseqres = list(aliseqres)
     listindex = []
+##A INICIO BLOQUE: Ungap aligned fastaseq by moving middle gaps to end positions
+    gapfound = False
+    aafound = False
+    mingapindex = 0
+    listalifastaseqreorder = listalifastaseq[:]
+    print 'ALIGNED_COMPARE_(ORDER:ORIG):' + fastaid
+    for index,pos in enumerate(listalifastaseq):  ##A # move middle gaps to end
+      if listalifastaseq[index] != '-':
+        aafound = True
+      if aafound and listalifastaseq[index] == '-':
+        gapfound = True
+        if mingapindex == 0:
+          mingapindex = index
+#?        aafound = False
+      if gapfound and listalifastaseq[index] != '-':
+#        listalifastaseqreorder[mingapindex] = pos
+        listalifastaseqreorder.insert(mingapindex, listalifastaseqreorder.pop(index))
+        mingapindex += 1
+#      if gapfound and listalifastaseq[index] == '-':
+#        mingapindex = index
+      print listalifastaseqreorder[index] + ':' + listalifastaseq[index] + '; ' + 'aafound:' + str(aafound) + '; gapfound:' + str(gapfound) + '; mingapindex:' + str(mingapindex) + '/'
+    print 'ALIGNED_COMPARE_END\n'
+##A FIN BLOQUE
     for index,pos in enumerate(listalifastaseq):  # o es listseqres?
       if listaliseqres[index] != '-':
         listindex.append(index)
+##A INICIO BLOQUE
+    alifastaseq = ''.join(listalifastaseqreorder)
+    print 'ALIGNED_REORDER:' + fastaid
+    print type(alifastaseq)
+    print alifastaseq
+    print 'ALIGNED_REORDER_END\n'    
+##A FIN BLOQUE
 #    minindex = min(listindex)
 #    maxindex = max(listindex)
     minindex = min(listindex) + seqresindex
@@ -581,6 +613,7 @@ def readSIFTSparse(inSIFTSparse,ELMpos,seq):
         if rlimit > 0:
           fastaseq = fasta.seq[rlimit:llimit]
         else:
+          rlimit = abs(rlimit)
           fastaseq = ''.join(('-' * rlimit, str(fasta.seq), '-' * llimit))
         for pos in range(int(minindex),int(maxindex)):
 ##X          if readflag == 1:  # testing readflag, now also in SEQRES; if not working, move all below one indentation left
